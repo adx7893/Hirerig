@@ -43,7 +43,8 @@ export const AppProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [searchTerm, setSearchTerm] = useState('');
   const [isDarkMode, setIsDarkMode] = useState(() => {
     const saved = localStorage.getItem('hire_rig_theme');
-    return saved === 'dark';
+    // Default to dark mode (return true) if no preference is saved, otherwise use saved preference
+    return saved !== null ? saved === 'dark' : true;
   });
   const [messages, setMessages] = useState<Message[]>([
     {

@@ -5,44 +5,19 @@ import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { UserRole } from '../types';
 
-const Navbar: React.FC = () => {
+// ==========================================
+// RECRUITER NAVBAR (Sidebar)
+// ==========================================
+const RecruiterNavbar: React.FC = () => {
   const { user, logout } = useAuth();
-  const { searchTerm, setSearchTerm, users, jobs, isDarkMode, toggleDarkMode } = useApp();
-  const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const [isAppsOpen, setIsAppsOpen] = useState(false);
+  const { isDarkMode, toggleDarkMode } = useApp();
   const location = useLocation();
-  const navigate = useNavigate();
-  const searchRef = useRef<HTMLDivElement>(null);
-
+  const [isAppsOpen, setIsAppsOpen] = useState(false);
+  
   const isActive = (path: string) => location.pathname === path;
-  const isRecruiter = user?.role === UserRole.RECRUITER;
 
-  // Global search results
-  const filteredUsers = searchTerm 
-    ? users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.headline.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 4)
-    : [];
-
-  const filteredJobs = searchTerm
-    ? jobs.filter(j => j.title.toLowerCase().includes(searchTerm.toLowerCase()) || j.company.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 4)
-    : [];
-
-  const showResults = isSearchFocused && searchTerm.length > 0 && (filteredUsers.length > 0 || filteredJobs.length > 0);
-
-  // Close search results on click outside
-  useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
-        setIsSearchFocused(false);
-      }
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  // --- RECRUITER SIDEBAR UI ---
-  if (isRecruiter) {
-    return (
-      <nav className="fixed top-0 left-0 h-screen w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col z-50 transition-colors">
+  return (
+    <nav className="fixed top-0 left-0 h-screen w-64 bg-white dark:bg-gray-900 border-r border-gray-200 dark:border-gray-800 flex flex-col z-50 transition-colors">
         {/* Logo Area */}
         <div className="h-16 flex items-center px-6 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <Link to="/" className="text-blue-600 font-bold text-2xl flex items-center">
@@ -160,24 +135,58 @@ const Navbar: React.FC = () => {
           </div>
         </div>
       </nav>
-    );
-  }
+  );
+};
 
-  // --- CANDIDATE NAVBAR UI (ORIGINAL) ---
+
+// ==========================================
+// CANDIDATE NAVBAR (Top Horizontal)
+// ==========================================
+const CandidateNavbar: React.FC = () => {
+  const { user, logout } = useAuth();
+  const { searchTerm, setSearchTerm, users, jobs, isDarkMode, toggleDarkMode } = useApp();
+  const [isSearchFocused, setIsSearchFocused] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+  const searchRef = useRef<HTMLDivElement>(null);
+  
+  const isActive = (path: string) => location.pathname === path;
+
+  // Global search results logic
+  const filteredUsers = searchTerm 
+    ? users.filter(u => u.name.toLowerCase().includes(searchTerm.toLowerCase()) || u.headline.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 4)
+    : [];
+
+  const filteredJobs = searchTerm
+    ? jobs.filter(j => j.title.toLowerCase().includes(searchTerm.toLowerCase()) || j.company.toLowerCase().includes(searchTerm.toLowerCase())).slice(0, 4)
+    : [];
+
+  const showResults = isSearchFocused && searchTerm.length > 0 && (filteredUsers.length > 0 || filteredJobs.length > 0);
+
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (searchRef.current && !searchRef.current.contains(event.target as Node)) {
+        setIsSearchFocused(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   return (
-    <nav className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 shadow-sm">
-      <div className="max-w-full mx-auto h-full px-4 flex items-center justify-between gap-4">
+    <nav className="sticky top-0 z-50 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 h-14 shadow-sm transition-colors duration-300">
+      <div className="max-w-7xl mx-auto h-full px-4 flex items-center justify-between">
         
         {/* Logo */}
-        <div className="flex items-center space-x-4 shrink-0">
+        <div className="flex items-center shrink-0 mr-2 md:mr-4">
           <Link to="/" className="text-blue-600 font-bold text-2xl flex items-center">
             <i className="fa-solid fa-briefcase mr-2"></i>
             <span className="hidden sm:inline">HireRig</span>
           </Link>
         </div>
 
-        {/* Search Bar - Only for Candidates */}
-        <div className="relative max-w-xs w-full hidden md:block" ref={searchRef}>
+        {/* Search Bar (Hidden on Mobile) */}
+        <div className="relative max-w-xs w-full hidden md:block mr-4" ref={searchRef}>
           <input 
             type="text" 
             value={searchTerm}
@@ -192,115 +201,124 @@ const Navbar: React.FC = () => {
           {showResults && (
             <div className="absolute top-full left-0 w-full bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-b-lg shadow-xl mt-1 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-200">
               {filteredUsers.length > 0 && (
-                <div className="py-2">
-                  <h3 className="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">People</h3>
-                  {filteredUsers.map(u => (
-                    <div 
-                      key={u.id} 
-                      onClick={() => { 
-                        setIsSearchFocused(false); 
-                        setSearchTerm(''); 
-                        navigate(`/profile/${u.id}`); 
-                      }}
-                      className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center cursor-pointer transition-colors"
-                    >
-                      <img src={u.avatar} className="w-8 h-8 rounded-full mr-3 object-cover border border-gray-100 dark:border-gray-600" alt="" />
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{u.name}</p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{u.headline}</p>
+                 <div className="py-2">
+                    <h3 className="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">People</h3>
+                    {filteredUsers.map(u => (
+                      <div 
+                        key={u.id} 
+                        onClick={() => { setIsSearchFocused(false); setSearchTerm(''); navigate(`/profile/${u.id}`); }}
+                        className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center cursor-pointer transition-colors"
+                      >
+                        <img src={u.avatar} className="w-8 h-8 rounded-full mr-3 object-cover border border-gray-100 dark:border-gray-600" alt="" />
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{u.name}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{u.headline}</p>
+                        </div>
                       </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                 </div>
               )}
               {filteredJobs.length > 0 && (
-                <div className="py-2 border-t border-gray-100 dark:border-gray-700">
-                  <h3 className="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jobs</h3>
-                  {filteredJobs.map(j => (
-                    <div 
-                      key={j.id} 
-                      onClick={() => {
-                        setIsSearchFocused(false);
-                        setSearchTerm(j.title);
-                        navigate('/jobs');
-                      }}
-                      className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center cursor-pointer transition-colors"
-                    >
-                      <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded flex items-center justify-center mr-3 shrink-0 border border-blue-100 dark:border-blue-800">
-                        <i className="fa-solid fa-briefcase text-sm"></i>
+                 <div className="py-2 border-t border-gray-100 dark:border-gray-700">
+                    <h3 className="px-4 py-1 text-[10px] font-bold text-gray-400 uppercase tracking-wider">Jobs</h3>
+                    {filteredJobs.map(j => (
+                      <div 
+                        key={j.id} 
+                        onClick={() => { setIsSearchFocused(false); setSearchTerm(j.title); navigate('/jobs'); }}
+                        className="px-4 py-2 hover:bg-gray-50 dark:hover:bg-gray-700 flex items-center cursor-pointer transition-colors"
+                      >
+                        <div className="w-8 h-8 bg-blue-50 dark:bg-blue-900/30 text-blue-600 rounded flex items-center justify-center mr-3 shrink-0 border border-blue-100 dark:border-blue-800">
+                           <i className="fa-solid fa-briefcase text-sm"></i>
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{j.title}</p>
+                          <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{j.company} • {j.location}</p>
+                        </div>
                       </div>
-                      <div className="min-w-0">
-                        <p className="text-sm font-semibold text-gray-900 dark:text-white truncate">{j.title}</p>
-                        <p className="text-[10px] text-gray-500 dark:text-gray-400 truncate">{j.company} • {j.location}</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                 </div>
               )}
             </div>
           )}
         </div>
 
-        {/* Navigation Links (Candidate) */}
-        <div className="flex-1 flex items-center justify-center overflow-x-auto no-scrollbar mask-gradient">
-          <div className="flex items-center space-x-6">
-            <Link to="/" className={`flex flex-col items-center text-xs transition-colors ${isActive('/') ? 'text-black dark:text-white font-bold' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}>
-              <div className={`mb-0.5 relative h-6 flex items-center ${isActive('/') ? 'after:content-[""] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-0.5 after:bg-black dark:after:bg-white' : ''}`}>
-                <i className="fa-solid fa-house text-xl"></i>
+        {/* Navigation Links - Centered & Compact on Mobile */}
+        <div className="flex-1 flex items-center justify-center">
+          <div className="flex items-center gap-1 sm:gap-6 md:gap-8">
+            <Link to="/" className={`group flex flex-col items-center justify-center min-w-[3.5rem] sm:min-w-auto px-1 py-1 transition-colors ${isActive('/') ? 'text-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}>
+              <div className="relative h-6 flex items-center justify-center w-full">
+                <i className={`fa-solid fa-house text-xl ${isActive('/') ? '' : ''}`}></i>
+                {isActive('/') && <span className="absolute -bottom-2 w-full h-0.5 bg-black dark:bg-white rounded-full"></span>}
               </div>
-              <span className="mt-1 hidden sm:inline">Home</span>
+              <span className={`mt-1 text-[10px] sm:text-xs font-medium hidden sm:inline ${isActive('/') ? 'font-bold' : ''}`}>Home</span>
             </Link>
-            <Link to="/jobs" className={`flex flex-col items-center text-xs transition-colors ${isActive('/jobs') ? 'text-black dark:text-white font-bold' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}>
-              <div className={`mb-0.5 relative h-6 flex items-center ${isActive('/jobs') ? 'after:content-[""] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-0.5 after:bg-black dark:after:bg-white' : ''}`}>
+
+            <Link to="/jobs" className={`group flex flex-col items-center justify-center min-w-[3.5rem] sm:min-w-auto px-1 py-1 transition-colors ${isActive('/jobs') ? 'text-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}>
+              <div className="relative h-6 flex items-center justify-center w-full">
                 <i className="fa-solid fa-briefcase text-xl"></i>
+                {isActive('/jobs') && <span className="absolute -bottom-2 w-full h-0.5 bg-black dark:bg-white rounded-full"></span>}
               </div>
-              <span className="mt-1 hidden sm:inline">Jobs</span>
+              <span className={`mt-1 text-[10px] sm:text-xs font-medium hidden sm:inline ${isActive('/jobs') ? 'font-bold' : ''}`}>Jobs</span>
             </Link>
-            <Link to="/messaging" className={`flex flex-col items-center text-xs transition-colors ${isActive('/messaging') ? 'text-black dark:text-white font-bold' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}>
-              <div className={`mb-0.5 relative h-6 flex items-center ${isActive('/messaging') ? 'after:content-[""] after:absolute after:-bottom-2 after:left-0 after:w-full after:h-0.5 after:bg-black dark:after:bg-white' : ''}`}>
+
+            <Link to="/messaging" className={`group flex flex-col items-center justify-center min-w-[3.5rem] sm:min-w-auto px-1 py-1 transition-colors ${isActive('/messaging') ? 'text-black dark:text-white' : 'text-gray-500 hover:text-black dark:hover:text-white'}`}>
+              <div className="relative h-6 flex items-center justify-center w-full">
                 <i className="fa-solid fa-comment-dots text-xl"></i>
+                {isActive('/messaging') && <span className="absolute -bottom-2 w-full h-0.5 bg-black dark:bg-white rounded-full"></span>}
               </div>
-              <span className="mt-1 hidden sm:inline">Messaging</span>
+              <span className={`mt-1 text-[10px] sm:text-xs font-medium hidden sm:inline ${isActive('/messaging') ? 'font-bold' : ''}`}>Messaging</span>
             </Link>
           </div>
         </div>
 
         {/* Right Section: Theme & Profile */}
-        <div className="flex items-center space-x-4 shrink-0">
-          {/* Theme Toggle Button */}
+        <div className="flex items-center gap-1 sm:gap-4 shrink-0 ml-2">
+          {/* Theme Toggle */}
           <button 
             onClick={toggleDarkMode}
-            className="flex flex-col items-center text-xs text-gray-500 hover:text-black dark:hover:text-white transition-colors"
-            title={isDarkMode ? "Switch to Light Mode" : "Switch to Dark Mode"}
+            className="flex flex-col items-center justify-center min-w-[3rem] sm:min-w-auto px-1 py-1 text-gray-500 hover:text-black dark:hover:text-white transition-colors"
           >
-            <div className="mb-0.5 h-6 flex items-center">
-              <i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-xl`}></i>
+            <div className="h-6 flex items-center justify-center w-full">
+               <i className={`fa-solid ${isDarkMode ? 'fa-sun' : 'fa-moon'} text-xl`}></i>
             </div>
-            <span className="mt-1 hidden sm:inline">{isDarkMode ? 'Light' : 'Dark'}</span>
+            <span className="mt-1 text-[10px] sm:text-xs font-medium hidden sm:inline">{isDarkMode ? 'Light' : 'Dark'}</span>
           </button>
           
-          <div className="relative group cursor-pointer flex flex-col items-center text-xs text-gray-500">
-            <img src={user?.avatar} alt="Me" className="w-8 h-8 rounded-full object-cover mb-0.5 border border-gray-200 dark:border-gray-700 shadow-sm" />
-            <span className="flex items-center hover:text-black dark:hover:text-white transition-colors">Me <i className="fa-solid fa-caret-down ml-1"></i></span>
-            
-            <div className="absolute top-12 right-0 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-[60]">
-              <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center">
-                <img src={user?.avatar} alt="Me" className="w-12 h-12 rounded-full mr-3 border border-gray-100 dark:border-gray-600 shadow-sm" />
-                <div className="min-w-0">
-                  <div className="font-semibold text-gray-900 dark:text-white truncate">{user?.name}</div>
-                  <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.headline}</div>
+          {/* Profile Dropdown */}
+          <div className="relative group cursor-pointer flex flex-col items-center justify-center min-w-[3rem] sm:min-w-auto px-1">
+             <img src={user?.avatar} alt="Me" className="w-7 h-7 sm:w-8 sm:h-8 rounded-full object-cover border border-gray-200 dark:border-gray-700 shadow-sm" />
+             <span className="mt-1 text-[10px] sm:text-xs font-medium hidden sm:flex items-center text-gray-500 group-hover:text-black dark:group-hover:text-white transition-colors">
+               Me <i className="fa-solid fa-caret-down ml-1 text-[10px]"></i>
+             </span>
+
+             <div className="absolute top-12 right-0 w-64 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg shadow-xl opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all duration-200 py-2 z-[60]">
+                <div className="px-4 py-2 border-b border-gray-100 dark:border-gray-700 flex items-center">
+                  <img src={user?.avatar} alt="Me" className="w-10 h-10 rounded-full mr-3 border border-gray-100 dark:border-gray-600 shadow-sm" />
+                  <div className="min-w-0">
+                    <div className="font-semibold text-sm text-gray-900 dark:text-white truncate">{user?.name}</div>
+                    <div className="text-xs text-gray-500 dark:text-gray-400 truncate">{user?.headline}</div>
+                  </div>
                 </div>
-              </div>
-              <Link to="/profile" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm dark:text-gray-200 transition-colors">View Profile</Link>
-              <div className="border-t border-gray-100 dark:border-gray-700 mt-2">
-                <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-red-600 font-medium transition-colors">Sign Out</button>
-              </div>
-            </div>
+                <Link to="/profile" className="block px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm dark:text-gray-200 transition-colors">View Profile</Link>
+                <div className="border-t border-gray-100 dark:border-gray-700 mt-2">
+                  <button onClick={logout} className="w-full text-left px-4 py-2 hover:bg-gray-100 dark:hover:bg-gray-700 text-sm text-red-600 font-medium transition-colors">Sign Out</button>
+                </div>
+             </div>
           </div>
         </div>
+
       </div>
     </nav>
   );
+};
+
+
+const Navbar: React.FC = () => {
+  const { user } = useAuth();
+  const isRecruiter = user?.role === UserRole.RECRUITER;
+
+  if (isRecruiter) return <RecruiterNavbar />;
+  return <CandidateNavbar />;
 };
 
 export default Navbar;
