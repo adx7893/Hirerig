@@ -1,0 +1,8 @@
+{
+  "name": "HireRig - Social Hiring Platform",
+  "description": "A high-fidelity LinkedIn/Facebook hybrid platform for professional networking, social interaction, and end-to-end recruitment management.",
+  "requestFramePermissions": [
+    "camera",
+    "microphone"
+  ]
+}
