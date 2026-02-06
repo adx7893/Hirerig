@@ -9,14 +9,18 @@ export interface User {
   id: string;
   name: string;
   email: string;
+  phone?: string;
+  location?: string;
   role: UserRole;
   avatar: string;
   banner?: string;
   headline: string;
-  bio?: string;
+  bio?: string; // This acts as 'Summary'
   experience?: Experience[];
   education?: Education[];
-  skills?: string[];
+  skills?: string[]; // Kept for backward compatibility, represents all skills
+  softSkills?: string[];
+  technicalSkills?: string[];
   projects?: Project[];
   languages?: string[];
   connections: string[]; // IDs
@@ -102,6 +106,27 @@ export interface Job {
   applicants: string[]; // Candidate IDs
   postedDate: string;
   status: 'Open' | 'Closed';
+  
+  // New detailed fields
+  schedule?: string;
+  isRemote?: boolean;
+  address?: {
+    street: string;
+    city: string;
+    province: string;
+    country: string;
+  };
+  benefits?: string[];
+  compensation?: {
+    min: string;
+    max: string;
+    currency: string;
+    frequency: string;
+  };
+  companyPitch?: string;
+  companyDescription?: string;
+  resumeRequired?: boolean;
+  notificationEmails?: string[];
 }
 
 export interface Message {

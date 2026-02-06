@@ -9,64 +9,96 @@ interface Props {
 }
 
 const ProjectManagement: React.FC<Props> = ({ openCreate = false }) => {
-  const { projects, users, addProject } = useApp();
+  const { projects, addProject } = useApp();
   const [showModal, setShowModal] = useState(openCreate);
   const [filterStatus, setFilterStatus] = useState<string>('All');
   const [isGenerating, setIsGenerating] = useState(false);
-  const [formData, setFormData] = useState({
-    title: '',
-    client: '',
-    description: '',
-    status: 'Planning' as const,
-    deadline: '',
-    techStackInput: '',
-    budget: '',
-    ideaInput: '' // For AI generation
+
+  // Detailed Form State
+  const [genForm, setGenForm] = useState({
+    describeProblem: '',
+    industry: '',
+    mainProcess: '',
+    subProcess: '',
+    methodology: 'Agile',
+    maxDuration: '',
+    durationUnit: 'Months',
+    durationDesc: '',
+    os: '',
+    database: '',
+    application: '',
+    architecture: '',
+    interfaces: [] as string[],
+    otherIntegrations: ''
   });
+
+  const INTERFACE_OPTIONS = ['Salesforce', 'SAP', 'Workday', 'Oracle', 'Other'];
+  const INDUSTRY_OPTIONS = ['Technology', 'Finance', 'Healthcare', 'Retail', 'Manufacturing', 'Logistics', 'Education', 'Government'];
+  const DURATION_UNITS = ['Weeks', 'Months', 'Years'];
 
   const activeProjects = projects.filter(p => p.status === 'In Progress' || p.status === 'Planning').length;
   const completedProjects = projects.filter(p => p.status === 'Completed').length;
-  
   const filteredProjects = projects.filter(p => filterStatus === 'All' || p.status === filterStatus);
 
-  const handleGenerate = async () => {
-    if (!formData.ideaInput) return;
-    setIsGenerating(true);
-    const result = await generateProjectDetails(formData.ideaInput);
-    if (result) {
-      setFormData(prev => ({
-        ...prev,
-        title: result.title || prev.title,
-        client: result.client || prev.client,
-        description: result.description || prev.description,
-        techStackInput: result.techStack?.join(', ') || prev.techStackInput,
-        budget: result.estimatedBudget || prev.budget,
-        deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0] // Dummy 3 month deadline
-      }));
-    }
-    setIsGenerating(false);
+  const handleInterfaceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setGenForm(prev => {
+      const newInterfaces = prev.interfaces.includes(value)
+        ? prev.interfaces.filter(i => i !== value)
+        : [...prev.interfaces, value];
+      return { ...prev, interfaces: newInterfaces };
+    });
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleGenerateAndSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    const newProject: ManagementProject = {
-      id: Math.random().toString(36).substr(2, 9),
-      title: formData.title,
-      client: formData.client,
-      description: formData.description,
-      status: formData.status,
-      deadline: formData.deadline,
-      techStack: formData.techStackInput.split(',').map(s => s.trim()).filter(s => s),
-      team: [], // Logic to assign team would go here
-      progress: 0,
-      budget: formData.budget
-    };
-    addProject(newProject);
-    setShowModal(false);
-    setFormData({
-      title: '', client: '', description: '', status: 'Planning', 
-      deadline: '', techStackInput: '', budget: '', ideaInput: ''
-    });
+    setIsGenerating(true);
+
+    // Construct a rich prompt from the detailed form data
+    const prompt = `
+      Create a project blueprint based on this Business Problem:
+      
+      Problem Description: ${genForm.describeProblem}
+      Industry: ${genForm.industry}
+      Process: ${genForm.mainProcess} > ${genForm.subProcess}
+      Methodology: ${genForm.methodology}
+      Duration Constraints: ${genForm.maxDuration} ${genForm.durationUnit} (${genForm.durationDesc})
+      
+      Technology Environment:
+      - OS: ${genForm.os}
+      - Database: ${genForm.database}
+      - Application: ${genForm.application}
+      - Architecture Systems: ${genForm.architecture}
+      - Interfaces: ${genForm.interfaces.join(', ')}
+      - Other Integrations: ${genForm.otherIntegrations}
+    `;
+
+    const result = await generateProjectDetails(prompt);
+
+    if (result) {
+      const newProject: ManagementProject = {
+        id: Math.random().toString(36).substr(2, 9),
+        title: result.title || 'Generated Project',
+        client: result.client || 'Internal',
+        description: result.description || genForm.describeProblem,
+        status: 'Planning',
+        deadline: new Date(Date.now() + 90 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Default 3 months
+        techStack: result.techStack || [],
+        team: [],
+        progress: 0,
+        budget: result.estimatedBudget
+      };
+      
+      addProject(newProject);
+      setShowModal(false);
+      // Reset form
+      setGenForm({
+        describeProblem: '', industry: '', mainProcess: '', subProcess: '', methodology: 'Agile',
+        maxDuration: '', durationUnit: 'Months', durationDesc: '',
+        os: '', database: '', application: '', architecture: '', interfaces: [], otherIntegrations: ''
+      });
+    }
+    setIsGenerating(false);
   };
 
   return (
@@ -172,7 +204,7 @@ const ProjectManagement: React.FC<Props> = ({ openCreate = false }) => {
               <div className="flex justify-between items-center pt-4 border-t border-gray-100 dark:border-gray-800">
                 <div className="flex -space-x-2">
                   {project.team.map((uid, i) => (
-                    <img key={i} src={`https://picsum.photos/seed/${uid}/40`} className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-900" title={uid} />
+                    <img key={i} src={`https://picsum.photos/seed/${uid}/40`} className="w-8 h-8 rounded-full border-2 border-white dark:border-gray-900" title={uid} alt="" />
                   ))}
                   <button className="w-8 h-8 rounded-full bg-gray-100 dark:bg-gray-800 border-2 border-white dark:border-gray-900 flex items-center justify-center text-xs text-gray-500">
                     <i className="fa-solid fa-plus"></i>
@@ -188,112 +220,226 @@ const ProjectManagement: React.FC<Props> = ({ openCreate = false }) => {
       {/* Generate/Create Project Modal */}
       {showModal && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl shadow-2xl animate-in zoom-in duration-200 overflow-hidden">
-             <div className="p-4 border-b dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
-               <h2 className="text-xl font-bold dark:text-white flex items-center">
-                 <i className="fa-solid fa-wand-magic-sparkles text-blue-600 mr-2"></i> Generate Project
-               </h2>
+          <div className="bg-white dark:bg-gray-900 w-full max-w-4xl rounded-2xl shadow-2xl animate-in zoom-in duration-200 overflow-hidden flex flex-col max-h-[90vh]">
+             <div className="p-5 border-b dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50 shrink-0">
+               <div>
+                 <h2 className="text-xl font-bold dark:text-white flex items-center">
+                   Generate Project and Job Description
+                 </h2>
+                 <p className="text-xs text-gray-500">From Business Problem</p>
+               </div>
                <button onClick={() => setShowModal(false)} className="text-gray-400 hover:text-gray-600"><i className="fa-solid fa-xmark text-xl"></i></button>
              </div>
              
-             <div className="p-6 overflow-y-auto max-h-[75vh]">
-               {/* AI Input Section */}
-               <div className="bg-indigo-50 dark:bg-indigo-900/20 p-4 rounded-xl border border-indigo-100 dark:border-indigo-900/50 mb-6">
-                 <label className="block text-xs font-bold text-indigo-800 dark:text-indigo-300 uppercase mb-2">
-                   What kind of project do you want to create?
-                 </label>
-                 <div className="flex gap-2">
-                    <input 
-                      type="text"
-                      placeholder="e.g. A ride-sharing mobile app for pet owners"
-                      value={formData.ideaInput}
-                      onChange={(e) => setFormData({...formData, ideaInput: e.target.value})}
-                      className="flex-1 bg-white dark:bg-gray-800 border-indigo-200 dark:border-indigo-800 rounded-lg px-4 py-2 text-sm outline-none focus:ring-2 focus:ring-indigo-500 dark:text-white"
-                    />
-                    <button 
-                      onClick={handleGenerate}
-                      disabled={isGenerating || !formData.ideaInput}
-                      className="bg-indigo-600 text-white font-bold px-4 py-2 rounded-lg text-sm hover:bg-indigo-700 disabled:opacity-50 transition-colors flex items-center min-w-[100px] justify-center"
-                    >
-                      {isGenerating ? <i className="fa-solid fa-spinner fa-spin"></i> : 'Auto-Fill'}
-                    </button>
-                 </div>
-                 <p className="text-[10px] text-indigo-600 dark:text-indigo-400 mt-2">
-                   Powered by Google Gemini. Enter an idea and click "Auto-Fill" to generate realistic details.
-                 </p>
-               </div>
-
-               <form onSubmit={handleSubmit} className="space-y-4">
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Project Title</label>
-                      <input 
-                        required
-                        value={formData.title}
-                        onChange={(e) => setFormData({...formData, title: e.target.value})}
-                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Client Name</label>
-                      <input 
-                        required
-                        value={formData.client}
-                        onChange={(e) => setFormData({...formData, client: e.target.value})}
-                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                 </div>
-
-                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Description</label>
-                    <textarea 
-                      required
-                      value={formData.description}
-                      onChange={(e) => setFormData({...formData, description: e.target.value})}
-                      className="w-full h-24 bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-1 focus:ring-blue-500 resize-none"
-                    />
-                 </div>
-
-                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Tech Stack (comma sep)</label>
-                      <input 
-                        required
-                        value={formData.techStackInput}
-                        onChange={(e) => setFormData({...formData, techStackInput: e.target.value})}
-                        placeholder="React, Node, SQL..."
-                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                    <div>
-                      <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Deadline</label>
-                      <input 
-                        type="date"
-                        required
-                        value={formData.deadline}
-                        onChange={(e) => setFormData({...formData, deadline: e.target.value})}
-                        className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-                      />
-                    </div>
-                 </div>
+             <div className="flex-1 overflow-y-auto p-6 md:p-8">
+               <form id="project-form" onSubmit={handleGenerateAndSubmit} className="space-y-8">
                  
-                 <div>
-                    <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Estimated Budget</label>
-                    <input 
-                      value={formData.budget}
-                      onChange={(e) => setFormData({...formData, budget: e.target.value})}
-                      placeholder="$0.00"
-                      className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-1 focus:ring-blue-500"
-                    />
+                 {/* Section 1: Problem Definition */}
+                 <div className="space-y-6">
+                   <h3 className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider border-b border-blue-100 dark:border-blue-900/50 pb-2">
+                     1. Business Context
+                   </h3>
+                   
+                   <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Describe Problem</label>
+                      <textarea 
+                        required
+                        rows={3}
+                        value={genForm.describeProblem}
+                        onChange={(e) => setGenForm({...genForm, describeProblem: e.target.value})}
+                        placeholder="e.g. Current manual inventory tracking is causing 20% stock discrepancies..."
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500 resize-none"
+                      />
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Business Area (Industry)</label>
+                        <select 
+                          value={genForm.industry}
+                          onChange={(e) => setGenForm({...genForm, industry: e.target.value})}
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select Industry</option>
+                          {INDUSTRY_OPTIONS.map(ind => <option key={ind} value={ind}>{ind}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Methodology</label>
+                        <select 
+                          value={genForm.methodology}
+                          onChange={(e) => setGenForm({...genForm, methodology: e.target.value})}
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="Agile">Agile</option>
+                          <option value="Waterfall">Waterfall</option>
+                          <option value="Hybrid">Hybrid</option>
+                          <option value="Scrum">Scrum</option>
+                          <option value="Kanban">Kanban</option>
+                        </select>
+                      </div>
+                   </div>
+
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Main Process</label>
+                        <input 
+                          type="text"
+                          value={genForm.mainProcess}
+                          onChange={(e) => setGenForm({...genForm, mainProcess: e.target.value})}
+                          placeholder="e.g. Supply Chain"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Sub Process</label>
+                        <input 
+                          type="text"
+                          value={genForm.subProcess}
+                          onChange={(e) => setGenForm({...genForm, subProcess: e.target.value})}
+                          placeholder="e.g. Inventory Management"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                   </div>
                  </div>
 
-                 <div className="pt-4 flex justify-end">
-                   <button type="submit" className="bg-blue-600 text-white font-bold py-2.5 px-8 rounded-xl shadow-lg hover:bg-blue-700 transition-all">
-                     Create Project
-                   </button>
+                 {/* Section 2: Duration */}
+                 <div className="space-y-6">
+                   <h3 className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider border-b border-blue-100 dark:border-blue-900/50 pb-2">
+                     2. Timeline Constraints
+                   </h3>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Max. Project Duration</label>
+                        <input 
+                          type="number"
+                          value={genForm.maxDuration}
+                          onChange={(e) => setGenForm({...genForm, maxDuration: e.target.value})}
+                          placeholder="e.g. 6"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Duration Unit</label>
+                        <select 
+                          value={genForm.durationUnit}
+                          onChange={(e) => setGenForm({...genForm, durationUnit: e.target.value})}
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        >
+                          <option value="">Select Unit</option>
+                          {DURATION_UNITS.map(u => <option key={u} value={u}>{u}</option>)}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Duration Description <span className="text-xs font-normal text-gray-400">(optional)</span></label>
+                        <input 
+                          type="text"
+                          value={genForm.durationDesc}
+                          onChange={(e) => setGenForm({...genForm, durationDesc: e.target.value})}
+                          placeholder="e.x., Hackathon, Long-term"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                   </div>
                  </div>
+
+                 {/* Section 3: Technology Environment */}
+                 <div className="space-y-6">
+                   <h3 className="text-sm font-bold text-blue-600 dark:text-blue-400 uppercase tracking-wider border-b border-blue-100 dark:border-blue-900/50 pb-2">
+                     3. Technology Environment
+                   </h3>
+                   
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Operating System</label>
+                        <input 
+                          type="text"
+                          value={genForm.os}
+                          onChange={(e) => setGenForm({...genForm, os: e.target.value})}
+                          placeholder="e.g. Linux / Windows Server"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Database</label>
+                        <input 
+                          type="text"
+                          value={genForm.database}
+                          onChange={(e) => setGenForm({...genForm, database: e.target.value})}
+                          placeholder="e.g. PostgreSQL, MongoDB"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Application</label>
+                        <input 
+                          type="text"
+                          value={genForm.application}
+                          onChange={(e) => setGenForm({...genForm, application: e.target.value})}
+                          placeholder="e.g. Web App, Mobile App"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Architecture (No. of Systems)</label>
+                        <input 
+                          type="text"
+                          value={genForm.architecture}
+                          onChange={(e) => setGenForm({...genForm, architecture: e.target.value})}
+                          placeholder="e.g. Microservices, 3-Tier"
+                          className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                        />
+                      </div>
+                   </div>
+
+                   <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-3">Interfaces (select multiple)</label>
+                      <div className="flex flex-wrap gap-4">
+                        {INTERFACE_OPTIONS.map(opt => (
+                          <label key={opt} className="flex items-center space-x-2 cursor-pointer group">
+                            <input 
+                              type="checkbox"
+                              value={opt}
+                              checked={genForm.interfaces.includes(opt)}
+                              onChange={handleInterfaceChange}
+                              className="w-5 h-5 rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+                            />
+                            <span className="text-sm text-gray-600 dark:text-gray-400 group-hover:text-gray-900 dark:group-hover:text-white transition-colors">{opt}</span>
+                          </label>
+                        ))}
+                      </div>
+                   </div>
+
+                   <div>
+                      <label className="block text-sm font-bold text-gray-700 dark:text-gray-300 mb-2">Other Applications / Integrations <span className="text-xs font-normal text-gray-400">(optional)</span></label>
+                      <input 
+                        type="text"
+                        value={genForm.otherIntegrations}
+                        onChange={(e) => setGenForm({...genForm, otherIntegrations: e.target.value})}
+                        placeholder="e.g. Stripe, Twilio"
+                        className="w-full bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500"
+                      />
+                   </div>
+                 </div>
+
                </form>
+             </div>
+
+             <div className="p-5 border-t dark:border-gray-800 bg-gray-50 dark:bg-gray-800/50 shrink-0 flex justify-end">
+               <button 
+                 type="submit" 
+                 form="project-form"
+                 disabled={isGenerating || !genForm.describeProblem}
+                 className="bg-blue-600 text-white font-bold py-3 px-10 rounded-xl shadow-lg hover:bg-blue-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed flex items-center"
+               >
+                 {isGenerating ? (
+                   <><i className="fa-solid fa-spinner fa-spin mr-2"></i> Generating...</>
+                 ) : (
+                   <><i className="fa-solid fa-wand-magic-sparkles mr-2"></i> Generate Blueprint</>
+                 )}
+               </button>
              </div>
           </div>
         </div>

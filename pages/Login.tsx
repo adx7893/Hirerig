@@ -39,14 +39,14 @@ const Login: React.FC = () => {
       </div>
 
       <div className="w-full max-w-md px-6 z-10">
-        <div className="flex items-center justify-center mb-10 opacity-0 animate-fade-up">
+        <div className="flex items-center justify-center mb-10 animate-fade-up">
           <div className="text-blue-600 dark:text-blue-500 font-black text-4xl flex items-center tracking-tight">
             <i className="fa-solid fa-briefcase mr-3 text-3xl"></i> HireRig
           </div>
         </div>
 
-        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white dark:border-gray-800 transition-all opacity-0 animate-fade-up delay-100">
-          <div className="opacity-0 animate-fade-up delay-200">
+        <div className="bg-white/80 dark:bg-gray-900/80 backdrop-blur-xl p-8 rounded-2xl shadow-2xl border border-white dark:border-gray-800 transition-all animate-fade-up delay-100">
+          <div className="animate-fade-up delay-200">
             <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
               {isLogin ? 'Welcome Back' : 'Join HireRig'}
             </h2>
@@ -57,7 +57,7 @@ const Login: React.FC = () => {
 
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
-              <div className="opacity-0 animate-fade-up delay-300">
+              <div className="animate-fade-up delay-300">
                 <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Full Name</label>
                 <input 
                   type="text" 
@@ -69,7 +69,7 @@ const Login: React.FC = () => {
                 />
               </div>
             )}
-            <div className="opacity-0 animate-fade-up delay-300">
+            <div className="animate-fade-up delay-300">
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-1.5">Email Address</label>
               <input 
                 type="email" 
@@ -81,7 +81,7 @@ const Login: React.FC = () => {
               />
             </div>
             
-            <div className="opacity-0 animate-fade-up delay-400">
+            <div className="animate-fade-up delay-400">
               <label className="block text-xs font-bold text-gray-700 dark:text-gray-300 uppercase tracking-wider mb-2.5">I am a</label>
               <div className="grid grid-cols-2 gap-3">
                 <button 
@@ -103,7 +103,7 @@ const Login: React.FC = () => {
               </div>
             </div>
 
-            <div className="opacity-0 animate-fade-up delay-500 pt-2">
+            <div className="animate-fade-up delay-500 pt-2">
               <button 
                 type="submit" 
                 disabled={isLoggingIn}
@@ -118,13 +118,13 @@ const Login: React.FC = () => {
             </div>
           </form>
 
-          <div className="mt-8 flex items-center space-x-3 opacity-0 animate-fade-up delay-500">
+          <div className="mt-8 flex items-center space-x-3 animate-fade-up delay-500">
             <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800"></div>
             <span className="text-[10px] text-gray-400 dark:text-gray-500 font-black uppercase tracking-widest">or</span>
             <div className="flex-1 h-px bg-gray-100 dark:bg-gray-800"></div>
           </div>
 
-          <div className="opacity-0 animate-fade-up delay-500">
+          <div className="animate-fade-up delay-500">
             <button 
               type="button"
               onClick={handleGoogleLogin}
@@ -137,7 +137,7 @@ const Login: React.FC = () => {
           </div>
         </div>
 
-        <div className="mt-8 text-center text-sm opacity-0 animate-fade-up delay-500">
+        <div className="mt-8 text-center text-sm animate-fade-up delay-500">
           <p className="text-gray-600 dark:text-gray-400 font-medium">
             {isLogin ? "New to HireRig? " : "Already on HireRig? "}
             <button 

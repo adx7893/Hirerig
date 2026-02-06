@@ -3,7 +3,7 @@ import React, { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useApp } from '../context/AppContext';
 import { analyzeJobMatch } from '../services/geminiService';
-import { Job } from '../types';
+import { Job, UserRole } from '../types';
 
 const Jobs: React.FC = () => {
   const { user } = useAuth();
@@ -12,6 +12,62 @@ const Jobs: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [aiAnalysis, setAiAnalysis] = useState<any>(null);
 
+  // --- RECRUITER VIEW: List Layout ---
+  if (user?.role === UserRole.RECRUITER) {
+    return (
+      <div className="max-w-7xl mx-auto px-4 py-8 animate-fade-up">
+        <h1 className="text-3xl font-bold text-gray-900 dark:text-white mb-6">Jobs</h1>
+        
+        <div className="bg-white dark:bg-gray-900 rounded-xl shadow-sm border border-gray-200 dark:border-gray-800 overflow-hidden">
+          <div className="divide-y divide-gray-100 dark:divide-gray-800">
+            {jobs.map((job) => (
+              <div key={job.id} className="p-6 hover:bg-gray-50 dark:hover:bg-gray-800/50 transition-colors">
+                {/* Header: Title - Location */}
+                <h3 className="text-lg font-bold text-blue-600 dark:text-blue-400 mb-1">
+                  {job.title} - {job.location}
+                </h3>
+                
+                {/* Subtext: Company - Created Info */}
+                <p className="text-sm text-gray-600 dark:text-gray-400 mb-4">
+                  {job.company} - Created on {job.postedDate} by {(job as any).creatorEmail || 'admin@sapsol.com'}
+                </p>
+
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                  {/* Action Button */}
+                  <button className="bg-gray-100 dark:bg-gray-800 text-gray-700 dark:text-gray-300 font-bold py-2 px-6 rounded border border-gray-300 dark:border-gray-600 hover:bg-gray-200 dark:hover:bg-gray-700 transition-colors text-sm w-fit">
+                    Manage <span className="mx-1">{job.applicants.length}</span> Candidate
+                  </button>
+
+                  {/* Meta: Time Ago & Status */}
+                  <div className="flex items-center space-x-6 text-sm font-medium text-gray-500 dark:text-gray-400">
+                    <span>{(job as any).timeAgo || 'Recently'}</span>
+                    <span className="flex items-center text-green-600 dark:text-green-400">
+                      <span className="w-2 h-2 rounded-full bg-green-500 mr-2"></span>
+                      {job.status || 'Active'}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+          {jobs.length === 0 && (
+            <div className="p-8 text-center text-gray-500 dark:text-gray-400">
+              No jobs posted yet.
+            </div>
+          )}
+        </div>
+        
+        {/* Footer info matching live site style */}
+        <div className="mt-8 pt-6 border-t border-gray-200 dark:border-gray-800 text-center text-xs text-gray-500 dark:text-gray-400">
+          <p className="mb-2">Privacy Policy | Terms and Conditions</p>
+          <p>© 2026 SAPSOL Technologies Inc. All rights reserved. Designed and Developed by SAPSOL Technologies Inc.</p>
+        </div>
+      </div>
+    );
+  }
+
+  // --- CANDIDATE VIEW: Search & Details Layout ---
+  
   // Live filter jobs list based on searchTerm
   const filteredJobs = useMemo(() => {
     if (!searchTerm) return jobs;
@@ -43,9 +99,9 @@ const Jobs: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 flex flex-col md:flex-row gap-6 h-[calc(100vh-64px)]">
-      {/* Left List */}
-      <div className="w-full md:w-96 overflow-y-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm flex flex-col transition-colors">
+    <div className="max-w-6xl mx-auto px-2 md:px-4 py-2 md:py-6 flex flex-col md:flex-row gap-6 h-[calc(100vh-120px)] md:h-[calc(100vh-64px)]">
+      {/* Left List - Hidden on mobile if a job is selected */}
+      <div className={`w-full md:w-96 overflow-y-auto bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm flex-col transition-colors ${selectedJob ? 'hidden md:flex' : 'flex'}`}>
         <div className="p-4 border-b border-gray-100 dark:border-gray-800 shrink-0">
           <h2 className="font-semibold text-gray-900 dark:text-white">
             {searchTerm ? `Search results for "${searchTerm}"` : 'Job picks for you'}
@@ -86,13 +142,20 @@ const Jobs: React.FC = () => {
         </div>
       </div>
 
-      {/* Right Details */}
-      <div className="flex-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm overflow-y-auto transition-colors">
+      {/* Right Details - Hidden on mobile if no job is selected */}
+      <div className={`flex-1 bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 shadow-sm overflow-y-auto transition-colors ${selectedJob ? 'flex' : 'hidden md:flex'}`}>
         {selectedJob ? (
-          <div className="p-6">
-            <div className="flex justify-between items-start mb-6">
+          <div className="p-6 w-full">
+            <button 
+              onClick={() => setSelectedJob(null)}
+              className="md:hidden mb-4 text-gray-500 hover:text-gray-800 dark:text-gray-400 flex items-center font-bold text-sm"
+            >
+              <i className="fa-solid fa-arrow-left mr-2"></i> Back to Jobs
+            </button>
+
+            <div className="flex flex-col md:flex-row justify-between items-start mb-6">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 dark:text-white mb-1">{selectedJob.title}</h1>
+                <h1 className="text-xl md:text-2xl font-bold text-gray-900 dark:text-white mb-1">{selectedJob.title}</h1>
                 <div className="flex items-center space-x-2 text-sm text-gray-700 dark:text-gray-300">
                   <span className="hover:text-blue-600 dark:hover:text-blue-400 hover:underline cursor-pointer">{selectedJob.company}</span>
                   <span>•</span>
@@ -107,7 +170,7 @@ const Jobs: React.FC = () => {
                   </div>
                 </div>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex space-x-2 mt-4 md:mt-0">
                 <button 
                   onClick={() => handleApply(selectedJob.id)}
                   className={`bg-blue-600 text-white font-semibold px-6 py-2 rounded-full hover:bg-blue-700 transition-colors ${selectedJob.applicants.includes(user?.id || '') ? 'opacity-50 cursor-not-allowed' : ''}`}
@@ -166,7 +229,7 @@ const Jobs: React.FC = () => {
             </div>
           </div>
         ) : (
-          <div className="h-full flex flex-col items-center justify-center text-center p-10">
+          <div className="h-full w-full flex flex-col items-center justify-center text-center p-10">
             <div className="w-24 h-24 bg-gray-50 dark:bg-gray-800 rounded-full flex items-center justify-center mb-4 border border-gray-100 dark:border-gray-700">
               <i className="fa-solid fa-briefcase text-4xl text-gray-300 dark:text-gray-700"></i>
             </div>

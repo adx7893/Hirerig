@@ -22,6 +22,9 @@ const Profile: React.FC = () => {
   const [resumeContent, setResumeContent] = useState<string>('');
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   
+  // State to track if we are editing a specific item (Experience/Education)
+  const [editingId, setEditingId] = useState<string | null>(null);
+  
   const moreMenuRef = useRef<HTMLDivElement>(null);
   
   const profileUser = useMemo(() => {
@@ -34,12 +37,16 @@ const Profile: React.FC = () => {
   const [editData, setEditData] = useState({
     name: '',
     headline: '',
+    email: '',
+    phone: '',
+    location: '',
     bio: '',
-    skills: '',
+    softSkills: '',
+    technicalSkills: '',
     isLookingForJob: false,
   });
 
-  // Forms for adding sections
+  // Forms for adding/editing sections
   const [expForm, setExpForm] = useState({ title: '', company: '', location: '', startDate: '', endDate: '', description: '' });
   const [eduForm, setEduForm] = useState({ school: '', degree: '', field: '', startDate: '', endDate: '' });
   const [projForm, setProjForm] = useState({ name: '', description: '', link: '', startDate: '', endDate: '' });
@@ -66,8 +73,12 @@ const Profile: React.FC = () => {
       setEditData({
         name: profileUser.name || '',
         headline: profileUser.headline || '',
+        email: profileUser.email || '',
+        phone: profileUser.phone || '',
+        location: profileUser.location || '',
         bio: profileUser.bio || '',
-        skills: profileUser.skills?.join(', ') || '',
+        softSkills: profileUser.softSkills?.join(', ') || '',
+        technicalSkills: profileUser.technicalSkills?.join(', ') || profileUser.skills?.join(', ') || '',
         isLookingForJob: profileUser.isLookingForJob || false,
       });
     }
@@ -100,12 +111,22 @@ const Profile: React.FC = () => {
     setIsOptimizing(false);
   };
 
+  // --- Resume Logic ---
+
   const handleBuildResume = async () => {
     if (!profileUser) return;
     setIsBuildingResume(true);
     setShowMoreMenu(false);
     try {
-      const result = await generateResume(profileUser);
+      // Ensure we are using the most up-to-date data for generation if changes were made locally
+      const updatedUser = {
+        ...profileUser,
+        ...editData, // Use current edit form data if available
+        softSkills: editData.softSkills.split(',').map(s => s.trim()).filter(Boolean),
+        technicalSkills: editData.technicalSkills.split(',').map(s => s.trim()).filter(Boolean),
+      };
+
+      const result = await generateResume(updatedUser);
       setResumeContent(result || 'Unable to generate resume at this time.');
       setShowResumeModal(true);
     } catch (error) {
@@ -115,32 +136,142 @@ const Profile: React.FC = () => {
     }
   };
 
+  const handleDownloadPDF = () => {
+    const printWindow = window.open('', '', 'height=800,width=800');
+    if (printWindow) {
+      printWindow.document.write('<html><head><title>Resume</title>');
+      // Add basic styling for the print window to handle markdown-like text
+      printWindow.document.write(`
+        <style>
+          body { font-family: 'Helvetica', 'Arial', sans-serif; padding: 40px; color: #333; line-height: 1.6; }
+          h1, h2, h3 { color: #111; margin-top: 20px; margin-bottom: 10px; }
+          ul { padding-left: 20px; }
+          li { margin-bottom: 5px; }
+          .content { white-space: pre-wrap; font-family: monospace; }
+        </style>
+      `);
+      printWindow.document.write('</head><body>');
+      // We wrap it in a pre-wrap div to preserve the structure returned by Gemini
+      printWindow.document.write(`<div class="content">${resumeContent}</div>`);
+      printWindow.document.write('</body></html>');
+      printWindow.document.close();
+      printWindow.print();
+    }
+  };
+
+  // --- Main Profile Edit Logic ---
+
   const handleSaveMain = () => {
     handleSyncUpdate({
       name: editData.name,
       headline: editData.headline,
+      email: editData.email,
+      phone: editData.phone,
+      location: editData.location,
       bio: editData.bio,
-      skills: editData.skills.split(',').map(s => s.trim()).filter(s => s),
+      softSkills: editData.softSkills.split(',').map(s => s.trim()).filter(s => s),
+      technicalSkills: editData.technicalSkills.split(',').map(s => s.trim()).filter(s => s),
+      // Sync legacy skills field for backward compatibility
+      skills: editData.technicalSkills.split(',').map(s => s.trim()).filter(s => s),
       isLookingForJob: editData.isLookingForJob
     });
     setIsEditing(false);
   };
 
-  const handleAddExperience = () => {
-    const newExp: Experience = { ...expForm, id: Math.random().toString(36).substr(2, 9) };
-    const currentExp = profileUser.experience || [];
-    handleSyncUpdate({ experience: [newExp, ...currentExp] });
-    setActiveModal(null);
+  // --- Experience Logic ---
+
+  const openAddExperience = () => {
     setExpForm({ title: '', company: '', location: '', startDate: '', endDate: '', description: '' });
+    setEditingId(null);
+    setActiveModal('experience');
   };
 
-  const handleAddEducation = () => {
-    const newEdu: Education = { ...eduForm, id: Math.random().toString(36).substr(2, 9) };
-    const currentEdu = profileUser.education || [];
-    handleSyncUpdate({ education: [newEdu, ...currentEdu] });
-    setActiveModal(null);
-    setEduForm({ school: '', degree: '', field: '', startDate: '', endDate: '' });
+  const openEditExperience = (exp: Experience) => {
+    setExpForm({
+      title: exp.title,
+      company: exp.company,
+      location: exp.location,
+      startDate: exp.startDate,
+      endDate: exp.endDate || '',
+      description: exp.description
+    });
+    setEditingId(exp.id);
+    setActiveModal('experience');
   };
+
+  const handleDeleteExperience = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this experience?')) {
+      const currentExp = profileUser.experience || [];
+      handleSyncUpdate({ experience: currentExp.filter(e => e.id !== id) });
+    }
+  };
+
+  const handleSaveExperience = () => {
+    const currentExp = profileUser.experience || [];
+    let updatedExp: Experience[];
+
+    if (editingId) {
+      // Update existing
+      updatedExp = currentExp.map(e => 
+        e.id === editingId ? { ...expForm, id: editingId } : e
+      );
+    } else {
+      // Add new
+      const newExp: Experience = { ...expForm, id: Math.random().toString(36).substr(2, 9) };
+      updatedExp = [newExp, ...currentExp];
+    }
+
+    handleSyncUpdate({ experience: updatedExp });
+    setActiveModal(null);
+  };
+
+  // --- Education Logic ---
+
+  const openAddEducation = () => {
+    setEduForm({ school: '', degree: '', field: '', startDate: '', endDate: '' });
+    setEditingId(null);
+    setActiveModal('education');
+  };
+
+  const openEditEducation = (edu: Education) => {
+    setEduForm({
+      school: edu.school,
+      degree: edu.degree,
+      field: edu.field,
+      startDate: edu.startDate,
+      endDate: edu.endDate || ''
+    });
+    setEditingId(edu.id);
+    setActiveModal('education');
+  };
+
+  const handleDeleteEducation = (id: string) => {
+    if (window.confirm('Are you sure you want to delete this education entry?')) {
+      const currentEdu = profileUser.education || [];
+      handleSyncUpdate({ education: currentEdu.filter(e => e.id !== id) });
+    }
+  };
+
+  const handleSaveEducation = () => {
+    const currentEdu = profileUser.education || [];
+    let updatedEdu: Education[];
+
+    if (editingId) {
+      // Update existing
+      updatedEdu = currentEdu.map(e => 
+        e.id === editingId ? { ...eduForm, id: editingId } : e
+      );
+    } else {
+      // Add new
+      const newEdu: Education = { ...eduForm, id: Math.random().toString(36).substr(2, 9) };
+      updatedEdu = [newEdu, ...currentEdu];
+    }
+
+    handleSyncUpdate({ education: updatedEdu });
+    setActiveModal(null);
+  };
+
+  // --- Open To Work Logic ---
 
   const handleSaveOtw = () => {
     handleSyncUpdate({ isLookingForJob: true });
@@ -245,12 +376,12 @@ const Profile: React.FC = () => {
                 )}
               </div>
               <p className="text-sm text-gray-800 dark:text-gray-200 mt-1">{profileUser.headline}</p>
-              <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
-                {profileUser.experience?.[0]?.location || 'Earth'} • 
-                <span className="text-blue-600 dark:text-blue-400 font-bold ml-1 cursor-pointer hover:underline">
+              <div className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex flex-col gap-1">
+                 <span>{profileUser.location || profileUser.experience?.[0]?.location || 'Location not set'}</span>
+                 <span className="text-blue-600 dark:text-blue-400 font-bold cursor-pointer hover:underline">
                   {profileUser.connections.length} connections
                 </span>
-              </p>
+              </div>
             </div>
             
             <div className="flex items-center space-x-2">
@@ -308,7 +439,7 @@ const Profile: React.FC = () => {
                       className="w-full text-left px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors flex items-center"
                     >
                       <i className="fa-solid fa-file-pdf mr-2"></i>
-                      Download PDF
+                      Generate Resume
                     </button>
                     {!isOwnProfile && (
                       <button 
@@ -354,40 +485,10 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
-      {/* Profile Analytics */}
-      {isOwnProfile && (
-        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-          <h3 className="font-bold text-gray-900 dark:text-white mb-1">Analytics</h3>
-          <p className="text-xs text-gray-500 dark:text-gray-400 mb-4 flex items-center">
-            <i className="fa-solid fa-eye mr-1"></i> Private to you
-          </p>
-          <div className="grid grid-cols-3 gap-6">
-            <div className="group cursor-pointer">
-              <div className="flex items-center text-sm font-bold text-gray-900 dark:text-white">
-                <i className="fa-solid fa-users mr-2 text-gray-400"></i> 1,240
-              </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 group-hover:underline">Profile views</p>
-            </div>
-            <div className="group cursor-pointer">
-              <div className="flex items-center text-sm font-bold text-gray-900 dark:text-white">
-                <i className="fa-solid fa-chart-line mr-2 text-gray-400"></i> 3,892
-              </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 group-hover:underline">Post impressions</p>
-            </div>
-            <div className="group cursor-pointer">
-              <div className="flex items-center text-sm font-bold text-gray-900 dark:text-white">
-                <i className="fa-solid fa-magnifying-glass mr-2 text-gray-400"></i> 128
-              </div>
-              <p className="text-[11px] text-gray-500 dark:text-gray-400 group-hover:underline">Search appearances</p>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* About Section */}
+      {/* About Section (Summary) */}
       <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm relative">
         <div className="flex justify-between items-center mb-4">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">About</h3>
+          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Summary</h3>
           {isOwnProfile && (
             <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-blue-600 transition-colors">
               <i className="fa-solid fa-pen"></i>
@@ -399,8 +500,66 @@ const Profile: React.FC = () => {
             {profileUser.bio}
           </p>
         ) : (
-          <p className="text-sm text-gray-400 italic">No bio provided yet.</p>
+          <p className="text-sm text-gray-400 italic">No summary provided yet.</p>
         )}
+      </div>
+
+      {/* Skills Sections */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {/* Technical Skills */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+           <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Technical Skills</h3>
+            {isOwnProfile && (
+              <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-blue-600 text-sm">
+                <i className="fa-solid fa-pen"></i>
+              </button>
+            )}
+           </div>
+           <div className="flex flex-wrap gap-2">
+             {profileUser.technicalSkills && profileUser.technicalSkills.length > 0 ? (
+               profileUser.technicalSkills.map((skill, i) => (
+                 <span key={i} className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold px-3 py-1 rounded-full text-xs border border-indigo-100 dark:border-indigo-900/50">
+                   {skill}
+                 </span>
+               ))
+             ) : (
+                profileUser.skills && profileUser.skills.length > 0 ? (
+                    // Fallback to legacy skills if technicalSkills empty
+                    profileUser.skills.map((skill, i) => (
+                      <span key={i} className="bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 font-bold px-3 py-1 rounded-full text-xs border border-indigo-100 dark:border-indigo-900/50">
+                        {skill}
+                      </span>
+                    ))
+                ) : (
+                    <p className="text-sm text-gray-400 italic">No technical skills listed.</p>
+                )
+             )}
+           </div>
+        </div>
+
+        {/* Soft Skills */}
+        <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
+           <div className="flex justify-between items-center mb-4">
+            <h3 className="text-lg font-bold text-gray-900 dark:text-white">Soft Skills</h3>
+            {isOwnProfile && (
+              <button onClick={() => setIsEditing(true)} className="text-gray-400 hover:text-blue-600 text-sm">
+                <i className="fa-solid fa-pen"></i>
+              </button>
+            )}
+           </div>
+           <div className="flex flex-wrap gap-2">
+             {profileUser.softSkills && profileUser.softSkills.length > 0 ? (
+               profileUser.softSkills.map((skill, i) => (
+                 <span key={i} className="bg-green-50 dark:bg-green-900/30 text-green-600 dark:text-green-400 font-bold px-3 py-1 rounded-full text-xs border border-green-100 dark:border-green-900/50">
+                   {skill}
+                 </span>
+               ))
+             ) : (
+               <p className="text-sm text-gray-400 italic">No soft skills listed.</p>
+             )}
+           </div>
+        </div>
       </div>
 
       {/* Experience Section */}
@@ -409,7 +568,7 @@ const Profile: React.FC = () => {
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">Experience</h3>
           {isOwnProfile && (
             <button 
-              onClick={() => setActiveModal('experience')}
+              onClick={openAddExperience}
               className="text-gray-400 hover:text-blue-600 text-xl transition-colors"
             >
               <i className="fa-solid fa-plus"></i>
@@ -419,12 +578,20 @@ const Profile: React.FC = () => {
         <div className="space-y-8">
           {profileUser.experience && profileUser.experience.length > 0 ? (
             profileUser.experience.map((exp) => (
-              <div key={exp.id} className="flex space-x-4 group">
+              <div key={exp.id} className="flex space-x-4 group relative">
                 <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center text-gray-400 shrink-0 border border-gray-200 dark:border-gray-700">
                   <i className="fa-solid fa-building text-2xl"></i>
                 </div>
                 <div className="flex-1 pb-6 border-b border-gray-100 dark:border-gray-800 last:border-0 group-last:pb-0">
-                  <h4 className="text-base font-bold text-gray-900 dark:text-white">{exp.title}</h4>
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-base font-bold text-gray-900 dark:text-white">{exp.title}</h4>
+                    {isOwnProfile && (
+                      <div className="flex space-x-2">
+                        <button onClick={() => openEditExperience(exp)} className="text-gray-400 hover:text-blue-600"><i className="fa-solid fa-pen"></i></button>
+                        <button onClick={() => handleDeleteExperience(exp.id)} className="text-gray-400 hover:text-red-600"><i className="fa-solid fa-trash"></i></button>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-800 dark:text-gray-200">{exp.company}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {exp.startDate} — {exp.endDate || 'Present'} • {exp.location}
@@ -445,7 +612,7 @@ const Profile: React.FC = () => {
           <h3 className="text-xl font-bold text-gray-900 dark:text-white">Education</h3>
           {isOwnProfile && (
             <button 
-              onClick={() => setActiveModal('education')}
+              onClick={openAddEducation}
               className="text-gray-400 hover:text-blue-600 text-xl transition-colors"
             >
               <i className="fa-solid fa-plus"></i>
@@ -455,12 +622,20 @@ const Profile: React.FC = () => {
         <div className="space-y-8">
           {profileUser.education && profileUser.education.length > 0 ? (
             profileUser.education.map((edu) => (
-              <div key={edu.id} className="flex space-x-4">
+              <div key={edu.id} className="flex space-x-4 relative">
                 <div className="w-12 h-12 bg-gray-100 dark:bg-gray-800 rounded flex items-center justify-center text-gray-400 shrink-0 border border-gray-200 dark:border-gray-700">
                   <i className="fa-solid fa-graduation-cap text-2xl"></i>
                 </div>
                 <div className="flex-1 pb-6 border-b border-gray-100 dark:border-gray-800 last:border-0">
-                  <h4 className="text-base font-bold text-gray-900 dark:text-white">{edu.school}</h4>
+                  <div className="flex justify-between items-start">
+                    <h4 className="text-base font-bold text-gray-900 dark:text-white">{edu.school}</h4>
+                    {isOwnProfile && (
+                      <div className="flex space-x-2">
+                        <button onClick={() => openEditEducation(edu)} className="text-gray-400 hover:text-blue-600"><i className="fa-solid fa-pen"></i></button>
+                        <button onClick={() => handleDeleteEducation(edu.id)} className="text-gray-400 hover:text-red-600"><i className="fa-solid fa-trash"></i></button>
+                      </div>
+                    )}
+                  </div>
                   <p className="text-sm text-gray-800 dark:text-gray-200">{edu.degree}, {edu.field}</p>
                   <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
                     {edu.startDate} — {edu.endDate || 'Present'}
@@ -474,38 +649,12 @@ const Profile: React.FC = () => {
         </div>
       </div>
 
-      {/* Skills Section */}
-      <div className="bg-white dark:bg-gray-900 rounded-xl border border-gray-200 dark:border-gray-800 p-6 shadow-sm">
-        <div className="flex justify-between items-center mb-6">
-          <h3 className="text-xl font-bold text-gray-900 dark:text-white">Skills</h3>
-          {isOwnProfile && (
-            <button 
-              onClick={() => setIsEditing(true)}
-              className="text-gray-400 hover:text-blue-600 text-xl transition-colors"
-            >
-              <i className="fa-solid fa-plus"></i>
-            </button>
-          )}
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {profileUser.skills && profileUser.skills.length > 0 ? (
-            profileUser.skills.map((skill, i) => (
-              <span key={i} className="bg-blue-50 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400 font-bold px-4 py-1.5 rounded-full text-xs shadow-sm border border-blue-100 dark:border-blue-900/50">
-                {skill}
-              </span>
-            ))
-          ) : (
-            <p className="text-sm text-gray-400 italic">No skills listed yet.</p>
-          )}
-        </div>
-      </div>
-
       {/* Edit Main Profile Modal */}
       {isEditing && (
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-white dark:bg-gray-900 w-full max-w-2xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200 transition-colors">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-3xl rounded-2xl shadow-2xl overflow-hidden animate-in zoom-in duration-200 transition-colors">
             <div className="p-4 border-b dark:border-gray-800 flex justify-between items-center bg-gray-50 dark:bg-gray-800/50">
-              <h2 className="text-xl font-bold dark:text-white">Edit intro</h2>
+              <h2 className="text-xl font-bold dark:text-white">Edit Profile & Resume Info</h2>
               <button onClick={() => setIsEditing(false)} className="text-gray-400 hover:text-gray-600"><i className="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div className="p-6 overflow-y-auto max-h-[70vh] space-y-6">
@@ -529,10 +678,43 @@ const Profile: React.FC = () => {
                   />
                 </div>
               </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                 <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Email</label>
+                  <input 
+                    type="email" 
+                    value={editData.email} 
+                    onChange={(e) => setEditData({ ...editData, email: e.target.value })}
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none" 
+                  />
+                </div>
+                 <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Phone</label>
+                  <input 
+                    type="tel" 
+                    value={editData.phone} 
+                    onChange={(e) => setEditData({ ...editData, phone: e.target.value })}
+                    placeholder="+1 (555) 000-0000"
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none" 
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Location</label>
+                <input 
+                  type="text" 
+                  value={editData.location} 
+                  onChange={(e) => setEditData({ ...editData, location: e.target.value })}
+                  placeholder="City, Country"
+                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none" 
+                />
+              </div>
               
               <div>
                 <div className="flex justify-between items-center mb-1">
-                  <label className="block text-xs font-bold text-gray-500 uppercase">About</label>
+                  <label className="block text-xs font-bold text-gray-500 uppercase">Professional Summary</label>
                   <button 
                     onClick={handleOptimizeBio}
                     disabled={isOptimizing || !editData.bio}
@@ -549,15 +731,27 @@ const Profile: React.FC = () => {
                 />
               </div>
 
-              <div>
-                <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Skills (Comma separated)</label>
-                <input 
-                  type="text" 
-                  value={editData.skills} 
-                  onChange={(e) => setEditData({ ...editData, skills: e.target.value })}
-                  placeholder="React, TypeScript, AWS..."
-                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none" 
-                />
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Technical Skills (Comma separated)</label>
+                  <input 
+                    type="text" 
+                    value={editData.technicalSkills} 
+                    onChange={(e) => setEditData({ ...editData, technicalSkills: e.target.value })}
+                    placeholder="React, AWS, Java..."
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none" 
+                  />
+                </div>
+                <div>
+                  <label className="block text-xs font-bold text-gray-500 uppercase mb-1">Soft Skills (Comma separated)</label>
+                  <input 
+                    type="text" 
+                    value={editData.softSkills} 
+                    onChange={(e) => setEditData({ ...editData, softSkills: e.target.value })}
+                    placeholder="Communication, Leadership..."
+                    className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm focus:ring-2 focus:ring-blue-500 dark:text-white outline-none" 
+                  />
+                </div>
               </div>
             </div>
             <div className="p-4 border-t dark:border-gray-800 flex justify-end bg-gray-50 dark:bg-gray-800/50">
@@ -565,7 +759,7 @@ const Profile: React.FC = () => {
                 onClick={handleSaveMain}
                 className="bg-blue-600 text-white font-bold py-2 px-8 rounded-full shadow-lg hover:bg-blue-700 transition-all active:scale-95"
               >
-                Save
+                Save Changes
               </button>
             </div>
           </div>
@@ -577,7 +771,9 @@ const Profile: React.FC = () => {
         <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
           <div className="bg-white dark:bg-gray-900 w-full max-w-xl rounded-2xl shadow-2xl animate-in zoom-in duration-200">
             <div className="p-4 border-b dark:border-gray-800 flex justify-between items-center">
-              <h2 className="text-xl font-bold dark:text-white">Add experience</h2>
+              <h2 className="text-xl font-bold dark:text-white">
+                {editingId ? 'Edit Experience' : 'Add Experience'}
+              </h2>
               <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600"><i className="fa-solid fa-xmark text-xl"></i></button>
             </div>
             <div className="p-6 space-y-4">
@@ -610,7 +806,57 @@ const Profile: React.FC = () => {
               />
             </div>
             <div className="p-4 border-t dark:border-gray-800 flex justify-end">
-              <button onClick={handleAddExperience} className="bg-blue-600 text-white font-bold py-2 px-8 rounded-full shadow-lg hover:bg-blue-700">Add</button>
+              <button onClick={handleSaveExperience} className="bg-blue-600 text-white font-bold py-2 px-8 rounded-full shadow-lg hover:bg-blue-700">
+                {editingId ? 'Save' : 'Add'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
+      {/* Education Modal */}
+      {activeModal === 'education' && (
+        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="bg-white dark:bg-gray-900 w-full max-w-xl rounded-2xl shadow-2xl animate-in zoom-in duration-200">
+            <div className="p-4 border-b dark:border-gray-800 flex justify-between items-center">
+              <h2 className="text-xl font-bold dark:text-white">
+                {editingId ? 'Edit Education' : 'Add Education'}
+              </h2>
+              <button onClick={() => setActiveModal(null)} className="text-gray-400 hover:text-gray-600"><i className="fa-solid fa-xmark text-xl"></i></button>
+            </div>
+            <div className="p-6 space-y-4">
+              <input 
+                type="text" placeholder="School / University" value={eduForm.school} 
+                onChange={(e) => setEduForm({...eduForm, school: e.target.value})}
+                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500" 
+              />
+              <input 
+                type="text" placeholder="Degree" value={eduForm.degree} 
+                onChange={(e) => setEduForm({...eduForm, degree: e.target.value})}
+                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500" 
+              />
+              <input 
+                type="text" placeholder="Field of Study" value={eduForm.field} 
+                onChange={(e) => setEduForm({...eduForm, field: e.target.value})}
+                className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500" 
+              />
+              <div className="grid grid-cols-2 gap-4">
+                <input 
+                  type="text" placeholder="Start (e.g. 2018-09)" value={eduForm.startDate} 
+                  onChange={(e) => setEduForm({...eduForm, startDate: e.target.value})}
+                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+                <input 
+                  type="text" placeholder="End (e.g. 2022-05)" value={eduForm.endDate} 
+                  onChange={(e) => setEduForm({...eduForm, endDate: e.target.value})}
+                  className="w-full bg-gray-50 dark:bg-gray-800 border-none rounded-lg p-3 text-sm dark:text-white outline-none focus:ring-2 focus:ring-blue-500" 
+                />
+              </div>
+            </div>
+            <div className="p-4 border-t dark:border-gray-800 flex justify-end">
+              <button onClick={handleSaveEducation} className="bg-blue-600 text-white font-bold py-2 px-8 rounded-full shadow-lg hover:bg-blue-700">
+                {editingId ? 'Save' : 'Add'}
+              </button>
             </div>
           </div>
         </div>
@@ -690,7 +936,12 @@ const Profile: React.FC = () => {
                 <h2 className="text-xl font-black uppercase tracking-tight">AI Tailored Resume</h2>
               </div>
               <div className="flex items-center space-x-3">
-                <button className="text-sm font-bold text-blue-600 hover:underline"><i className="fa-solid fa-download mr-1"></i> Download PDF</button>
+                <button 
+                  onClick={handleDownloadPDF} 
+                  className="text-sm font-bold text-blue-600 hover:underline"
+                >
+                  <i className="fa-solid fa-download mr-1"></i> Download PDF
+                </button>
                 <button onClick={() => setShowResumeModal(false)} className="text-gray-400 hover:text-gray-600"><i className="fa-solid fa-xmark text-xl"></i></button>
               </div>
             </div>

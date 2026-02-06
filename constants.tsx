@@ -6,15 +6,19 @@ export const MOCK_USERS = [
     id: 'u1',
     name: 'Sarah Connor',
     email: 'sarah@candidate.com',
+    phone: '+1 (555) 123-4567',
+    location: 'San Francisco, CA',
     role: 'CANDIDATE',
     avatar: 'https://images.unsplash.com/photo-1494790108377-be9c29b29330?q=80&w=200&auto=format&fit=crop',
     banner: 'https://images.unsplash.com/photo-1557683316-973673baf926?q=80&w=1000&auto=format&fit=crop',
     headline: 'Senior Full Stack Developer | React & Node.js Expert',
-    bio: 'Passionate about building scalable web applications and mentoring junior developers. Specialized in modern JavaScript ecosystems.',
+    bio: 'Passionate Senior Full Stack Developer with over 5 years of experience building scalable web applications. Adept at leading frontend teams and mentoring junior developers. Specialized in the modern JavaScript ecosystem, delivering high-performance solutions for complex business needs.',
     connections: ['u2', 'u3', 'u4'],
     following: ['u2'],
     followers: ['u2', 'u5'],
     skills: ['React', 'TypeScript', 'Node.js', 'AWS', 'Docker'],
+    technicalSkills: ['React', 'TypeScript', 'Node.js', 'AWS', 'Docker', 'GraphQL', 'PostgreSQL'],
+    softSkills: ['Leadership', 'Mentoring', 'Communication', 'Problem Solving', 'Agile Methodology'],
     isLookingForJob: true,
     experience: [
       {
@@ -23,19 +27,31 @@ export const MOCK_USERS = [
         company: 'Tech Solutions Inc.',
         location: 'Remote',
         startDate: '2021-01',
-        description: 'Leading the frontend team in developing high-performance dashboards.'
+        description: 'Leading the frontend team in developing high-performance dashboards. Improved application load time by 40% through code splitting and optimization. Mentored 3 junior developers to promotion.'
+      }
+    ],
+    education: [
+      {
+        id: 'ed1',
+        school: 'University of Technology',
+        degree: 'Bachelor of Science',
+        field: 'Computer Science',
+        startDate: '2015-09',
+        endDate: '2019-05'
       }
     ]
   },
   {
     id: 'u2',
-    name: 'James Rodriguez',
-    email: 'james@recruiter.com',
+    name: 'Bhargav Desai',
+    email: 'bhargav.desai@sapsol.com',
+    phone: '+1 (555) 987-6543',
+    location: 'Toronto, ON',
     role: 'RECRUITER',
     avatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
     banner: 'https://images.unsplash.com/photo-1560179707-f14e90ef3623?q=80&w=1000&auto=format&fit=crop',
-    headline: 'Technical Recruiter @ FutureStack | Hiring Top Talent',
-    bio: 'Helping developers find their dream roles in the tech industry.',
+    headline: 'Talent Acquisition @ Sapsol',
+    bio: 'Helping developers find their dream roles in the tech industry. Focused on building long-term relationships with candidates and clients.',
     connections: ['u1', 'u3'],
     following: ['u1'],
     followers: ['u1'],
@@ -44,15 +60,19 @@ export const MOCK_USERS = [
     id: 'u3',
     name: 'Michael Chen',
     email: 'michael@candidate.com',
+    phone: '+1 (555) 555-5555',
+    location: 'Austin, TX',
     role: 'CANDIDATE',
     avatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
     banner: 'https://images.unsplash.com/photo-1519389950473-47ba0277781c?q=80&w=1000&auto=format&fit=crop',
     headline: 'UX/UI Designer | Creating Human-Centered Digital Experiences',
-    bio: 'Award-winning designer with a knack for simplifying complex workflows. Expert in Figma and Design Systems.',
+    bio: 'Award-winning designer with a knack for simplifying complex workflows. Expert in Figma and Design Systems. Committed to user-centric design principles.',
     connections: ['u1', 'u2'],
     following: [],
     followers: ['u1'],
     skills: ['Figma', 'User Research', 'Prototyping', 'Adobe XD', 'HTML/CSS'],
+    technicalSkills: ['Figma', 'Adobe XD', 'Sketch', 'HTML', 'CSS', 'Principle'],
+    softSkills: ['Empathy', 'Collaboration', 'User Research', 'Presentation'],
     isLookingForJob: true,
     experience: [
       {
@@ -62,7 +82,7 @@ export const MOCK_USERS = [
         location: 'San Francisco, CA',
         startDate: '2020-05',
         endDate: '2023-08',
-        description: 'Redesigned the core mobile application resulting in a 40% increase in user retention.'
+        description: 'Redesigned the core mobile application resulting in a 40% increase in user retention. Conducted user research studies to inform product roadmap.'
       }
     ]
   },
@@ -70,6 +90,8 @@ export const MOCK_USERS = [
     id: 'u4',
     name: 'Emily Davis',
     email: 'emily@candidate.com',
+    phone: '+1 (555) 222-3333',
+    location: 'Seattle, WA',
     role: 'CANDIDATE',
     avatar: 'https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?q=80&w=200&auto=format&fit=crop',
     banner: 'https://images.unsplash.com/photo-1522071820081-009f0129c71c?q=80&w=1000&auto=format&fit=crop',
@@ -79,6 +101,8 @@ export const MOCK_USERS = [
     following: ['u1'],
     followers: [],
     skills: ['Kubernetes', 'Terraform', 'AWS', 'Python', 'Jenkins'],
+    technicalSkills: ['Kubernetes', 'Terraform', 'AWS', 'Python', 'Bash', 'Jenkins', 'Docker'],
+    softSkills: ['Problem Solving', 'Incident Management', 'Communication'],
     isLookingForJob: false,
     experience: [
       {
@@ -87,7 +111,7 @@ export const MOCK_USERS = [
         company: 'CloudNet Systems',
         location: 'Austin, TX',
         startDate: '2019-11',
-        description: 'Managing a multi-region cloud infrastructure for high-traffic applications.'
+        description: 'Managing a multi-region cloud infrastructure for high-traffic applications. Implemented IAC using Terraform.'
       }
     ]
   },
@@ -104,6 +128,8 @@ export const MOCK_USERS = [
     following: [],
     followers: ['u1'],
     skills: ['Product Strategy', 'Agile', 'JIRA', 'SQL', 'Market Analysis'],
+    technicalSkills: ['JIRA', 'SQL', 'Tableau', 'Google Analytics'],
+    softSkills: ['Leadership', 'Strategic Thinking', 'Stakeholder Management'],
     isLookingForJob: true,
     experience: [
       {
@@ -112,7 +138,7 @@ export const MOCK_USERS = [
         company: 'FinTech Corp',
         location: 'New York, NY',
         startDate: '2021-03',
-        description: 'Launched 3 successful B2B products generating $5M in ARR.'
+        description: 'Launched 3 successful B2B products generating $5M in ARR. Led a cross-functional team of 10.'
       }
     ]
   },
@@ -124,11 +150,13 @@ export const MOCK_USERS = [
     avatar: 'https://images.unsplash.com/photo-1580489944761-15a19d654956?q=80&w=200&auto=format&fit=crop',
     banner: 'https://images.unsplash.com/photo-1460925895917-afdab827c52f?q=80&w=1000&auto=format&fit=crop',
     headline: 'Data Scientist | Machine Learning & AI Enthusiast',
-    bio: 'Turning raw data into actionable insights. passionate about NLP and Computer Vision.',
+    bio: 'Turning raw data into actionable insights. Passionate about NLP and Computer Vision.',
     connections: [],
     following: [],
     followers: [],
     skills: ['Python', 'TensorFlow', 'PyTorch', 'SQL', 'Tableau'],
+    technicalSkills: ['Python', 'TensorFlow', 'PyTorch', 'SQL', 'Scikit-learn'],
+    softSkills: ['Analytical Thinking', 'Communication', 'Curiosity'],
     isLookingForJob: true,
     experience: [
       {
@@ -138,7 +166,7 @@ export const MOCK_USERS = [
         location: 'Chicago, IL',
         startDate: '2020-06',
         endDate: '2022-12',
-        description: 'Built predictive models for inventory management.'
+        description: 'Built predictive models for inventory management resulting in 15% cost reduction.'
       }
     ]
   }
@@ -160,69 +188,192 @@ export const MOCK_POSTS = [
   {
     id: 'p2',
     authorId: 'u2',
-    authorName: 'James Rodriguez',
+    authorName: 'Bhargav Desai',
     authorAvatar: 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?q=80&w=200&auto=format&fit=crop',
-    authorHeadline: 'Technical Recruiter @ FutureStack',
+    authorHeadline: 'Talent Acquisition @ Sapsol',
     content: "We are actively hiring Senior Backend Engineers! If you love Go and Distributed Systems, DM me or check our careers page. 🚀",
     likes: ['u4'],
     comments: [],
     timestamp: new Date(Date.now() - 3600000).toISOString()
-  },
-  {
-    id: 'p3',
-    authorId: 'u3',
-    authorName: 'Michael Chen',
-    authorAvatar: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?q=80&w=200&auto=format&fit=crop',
-    authorHeadline: 'UX/UI Designer',
-    content: "Big news! I just published my case study on simplifying checkout flows. Check it out on my portfolio. Feedback welcome! 🎨 #UXDesign #CaseStudy",
-    likes: ['u1', 'u5'],
-    comments: [],
-    timestamp: new Date(Date.now() - 7200000).toISOString()
   }
 ];
 
 export const MOCK_JOBS = [
   {
     id: 'j1',
-    title: 'Senior React Developer',
-    company: 'InnovateX',
-    location: 'San Francisco, CA',
-    type: 'Full-time',
-    salary: '$150k - $180k',
-    description: 'We are looking for a React expert to help us build the future of AI-driven analytics.',
-    requirements: ['5+ years React', 'Strong TypeScript', 'Experience with GraphQL'],
-    postedBy: 'u2',
-    applicants: [],
-    postedDate: '2023-10-01',
-    status: 'Open'
+    title: 'Retail Inventory & Planning Systems Integration Consultant',
+    company: 'Sapsol',
+    location: 'Canada',
+    type: 'Contract',
+    salary: 'Competitve',
+    description: 'Specialized consultant needed for retail planning systems.',
+    requirements: ['Retail Systems', 'Integration', 'Planning'],
+    postedBy: 'u2', // Bhargav
+    applicants: ['u1', 'u3', 'u4'],
+    postedDate: '2025-07-23 10:44:00',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '6 months ago',
+    status: 'Active'
   },
   {
     id: 'j2',
-    title: 'Product Designer',
-    company: 'DesignFlow',
-    location: 'New York, NY',
-    type: 'Remote',
-    salary: '$120k - $150k',
-    description: 'Lead our UI/UX efforts for our mobile and web platforms.',
-    requirements: ['Figma', 'User Research', 'Design Systems'],
+    title: 'POst Partner',
+    company: 'Sapsol',
+    location: 'Mississauga, Ontario, Canada',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'Partner role for ongoing operations.',
+    requirements: ['Partnership', 'Business Development'],
     postedBy: 'u2',
-    applicants: ['u1', 'u3'],
-    postedDate: '2023-10-05',
-    status: 'Open'
+    applicants: ['u3', 'u5', 'u6'],
+    postedDate: '2025-03-07 12:53:11',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '10 months ago',
+    status: 'Active'
   },
   {
     id: 'j3',
-    title: 'DevOps Engineer',
-    company: 'CloudScale',
-    location: 'Remote',
-    type: 'Contract',
-    salary: '$90 - $120 / hr',
-    description: 'Looking for a Kubernetes expert to migrate our legacy infrastructure.',
-    requirements: ['AWS', 'Terraform', 'Kubernetes'],
+    title: 'WEB APPLICATION',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'Web application development role.',
+    requirements: ['Web Dev', 'HTML', 'CSS'],
+    postedBy: 'u2',
+    applicants: [],
+    postedDate: '2025-01-09 08:44:07',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '1 year ago',
+    status: 'Active'
+  },
+  {
+    id: 'j4',
+    title: 'data',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'Data entry and processing.',
+    requirements: ['Excel', 'Data Entry'],
+    postedBy: 'u2',
+    applicants: ['u6', 'u1'],
+    postedDate: '2024-10-02 12:03:07',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '1 year ago',
+    status: 'Active'
+  },
+  {
+    id: 'j5',
+    title: 'developers',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'General developer role.',
+    requirements: ['Coding', 'Debugging'],
+    postedBy: 'u2',
+    applicants: ['u1', 'u4', 'u6', 'u3'],
+    postedDate: '2024-09-20 10:30:39',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '1 year ago',
+    status: 'Active'
+  },
+  {
+    id: 'j6',
+    title: 'Excel',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Part-time',
+    salary: 'TBD',
+    description: 'Advanced Excel tasks.',
+    requirements: ['Excel', 'Macros'],
+    postedBy: 'u2',
+    applicants: ['u5'],
+    postedDate: '2024-07-15 11:03:44',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '1 year ago',
+    status: 'Active'
+  },
+  {
+    id: 'j7',
+    title: 'c',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'C programming.',
+    requirements: ['C', 'Embedded'],
+    postedBy: 'u2',
+    applicants: ['u4', 'u1'],
+    postedDate: '2023-12-15 11:09:47',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '2 years ago',
+    status: 'Active'
+  },
+  {
+    id: 'j8',
+    title: 'developer',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'Software developer.',
+    requirements: ['Software Development'],
+    postedBy: 'u2',
+    applicants: ['u1', 'u3', 'u4'],
+    postedDate: '2024-05-24 11:15:18',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '1 year ago',
+    status: 'Active'
+  },
+  {
+    id: 'j9',
+    title: 'java',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'Java backend development.',
+    requirements: ['Java', 'Spring'],
+    postedBy: 'u2',
+    applicants: ['u1', 'u4'],
+    postedDate: '2023-10-20 14:39:54',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '2 years ago',
+    status: 'Active'
+  },
+  {
+    id: 'j10',
+    title: 'automation testing',
+    company: 'Sapsol',
+    location: 'Surat, Gujarat, India',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'QA Automation.',
+    requirements: ['Selenium', 'Java'],
     postedBy: 'u2',
     applicants: ['u4'],
-    postedDate: '2023-10-06',
-    status: 'Open'
+    postedDate: '2024-03-21 10:27:49',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '1 year ago',
+    status: 'Active'
+  },
+  {
+    id: 'j11',
+    title: 'PHP Laravel Dev',
+    company: 'Test Company',
+    location: 'Mississauga, Ontario, Canada',
+    type: 'Full-time',
+    salary: 'TBD',
+    description: 'Laravel development.',
+    requirements: ['PHP', 'Laravel'],
+    postedBy: 'u2',
+    applicants: [],
+    postedDate: '2023-12-20 11:48:04',
+    creatorEmail: 'bhargav.desai@sapsol.com',
+    timeAgo: '2 years ago',
+    status: 'Active'
   }
 ];
 

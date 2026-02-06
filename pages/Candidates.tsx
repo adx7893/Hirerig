@@ -16,7 +16,10 @@ const Candidates: React.FC = () => {
       const isCandidate = user.role === UserRole.CANDIDATE;
       const matchesSearch = user.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
                             user.headline.toLowerCase().includes(searchTerm.toLowerCase());
-      const matchesSkill = filterSkill ? user.skills?.some(s => s.toLowerCase().includes(filterSkill.toLowerCase())) : true;
+      
+      // Use technicalSkills if available, otherwise fallback to legacy skills
+      const userSkills = user.technicalSkills || user.skills || [];
+      const matchesSkill = filterSkill ? userSkills.some(s => s.toLowerCase().includes(filterSkill.toLowerCase())) : true;
       
       return isCandidate && matchesSearch && matchesSkill;
     });
@@ -25,7 +28,9 @@ const Candidates: React.FC = () => {
   const allSkills = useMemo(() => {
     const skills = new Set<string>();
     users.filter(u => u.role === UserRole.CANDIDATE).forEach(u => {
-      u.skills?.forEach(s => skills.add(s));
+      // Aggregate from technicalSkills or legacy skills
+      const userSkills = u.technicalSkills || u.skills || [];
+      userSkills.forEach(s => skills.add(s));
     });
     return Array.from(skills).sort();
   }, [users]);
@@ -104,19 +109,19 @@ const Candidates: React.FC = () => {
                 
                 <p className="text-xs text-gray-500 dark:text-gray-400 mt-1 flex items-center">
                   <i className="fa-solid fa-location-dot text-gray-400 mr-2 w-3 text-center"></i>
-                  {candidate.experience?.[0]?.location || 'Remote'}
+                  {candidate.location || candidate.experience?.[0]?.location || 'Remote'}
                 </p>
               </div>
 
               <div className="mt-auto pt-4 border-t border-gray-100 dark:border-gray-800 mb-6">
                  <div className="flex flex-wrap gap-1.5 mb-4 max-h-16 overflow-hidden">
-                   {candidate.skills?.slice(0, 4).map((skill, i) => (
+                   {(candidate.technicalSkills || candidate.skills || []).slice(0, 4).map((skill, i) => (
                      <span key={i} className="px-2 py-1 bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-300 text-[10px] font-bold rounded">
                        {skill}
                      </span>
                    ))}
-                   {(candidate.skills?.length || 0) > 4 && (
-                     <span className="px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-400 text-[10px] font-bold rounded">+{candidate.skills!.length - 4}</span>
+                   {((candidate.technicalSkills || candidate.skills || []).length) > 4 && (
+                     <span className="px-2 py-1 bg-gray-50 dark:bg-gray-800 text-gray-400 text-[10px] font-bold rounded">+{(candidate.technicalSkills || candidate.skills || []).length - 4}</span>
                    )}
                  </div>
                  

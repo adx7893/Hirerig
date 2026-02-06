@@ -53,11 +53,11 @@ const Messaging: React.FC = () => {
   };
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 h-[calc(100vh-64px)]">
-      <div className="bg-white dark:bg-gray-900 rounded-lg border border-gray-200 dark:border-gray-800 flex h-full overflow-hidden transition-colors">
+    <div className="max-w-6xl mx-auto px-0 md:px-4 py-0 md:py-6 h-[calc(100vh-120px)] md:h-[calc(100vh-64px)]">
+      <div className="bg-white dark:bg-gray-900 md:rounded-lg border-x md:border border-gray-200 dark:border-gray-800 flex h-full overflow-hidden transition-colors">
         
-        {/* Conversations List */}
-        <div className="w-full md:w-80 border-r border-gray-200 dark:border-gray-800 flex flex-col">
+        {/* Conversations List - Hidden on mobile if chat is open */}
+        <div className={`w-full md:w-80 border-r border-gray-200 dark:border-gray-800 flex-col ${selectedUser ? 'hidden md:flex' : 'flex'}`}>
           <div className="p-4 border-b border-gray-200 dark:border-gray-800 flex justify-between items-center">
             <h2 className="font-semibold text-gray-900 dark:text-white">Messaging</h2>
             <button className="text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-800 p-2 rounded-full">
@@ -93,14 +93,17 @@ const Messaging: React.FC = () => {
           </div>
         </div>
 
-        {/* Chat Window */}
-        <div className="flex-1 flex flex-col bg-gray-50 dark:bg-gray-950 transition-colors">
+        {/* Chat Window - Hidden on mobile if no chat selected */}
+        <div className={`flex-1 flex-col bg-gray-50 dark:bg-gray-950 transition-colors ${selectedUser ? 'flex' : 'hidden md:flex'}`}>
           {selectedUser ? (
             <>
               {/* Header */}
-              <div className="p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
+              <div className="p-3 md:p-4 bg-white dark:bg-gray-900 border-b border-gray-200 dark:border-gray-800 flex items-center justify-between">
                 <div className="flex items-center space-x-3">
-                  <img src={selectedUser.avatar} className="w-10 h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
+                  <button onClick={() => setSelectedUser(null)} className="md:hidden text-gray-500 hover:text-gray-900 dark:text-gray-400">
+                    <i className="fa-solid fa-arrow-left text-lg"></i>
+                  </button>
+                  <img src={selectedUser.avatar} className="w-8 h-8 md:w-10 md:h-10 rounded-full object-cover border border-gray-200 dark:border-gray-700" />
                   <div>
                     <h3 className="font-semibold text-gray-900 dark:text-white text-sm">{selectedUser.name}</h3>
                     <p className="text-[10px] text-gray-500 dark:text-gray-400 line-clamp-1">{selectedUser.headline}</p>
@@ -112,7 +115,7 @@ const Messaging: React.FC = () => {
               <div className="flex-1 overflow-y-auto p-4 space-y-4">
                 {chatMessages.map(msg => (
                   <div key={msg.id} className={`flex ${msg.senderId === user?.id ? 'justify-end' : 'justify-start'}`}>
-                    <div className={`max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
+                    <div className={`max-w-[75%] rounded-2xl px-4 py-2 text-sm shadow-sm ${
                       msg.senderId === user?.id 
                         ? 'bg-blue-600 text-white rounded-br-none' 
                         : 'bg-white dark:bg-gray-800 text-gray-800 dark:text-gray-200 rounded-bl-none border border-gray-100 dark:border-gray-700'
@@ -125,14 +128,14 @@ const Messaging: React.FC = () => {
               </div>
 
               {/* Input Area */}
-              <div className="p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
+              <div className="p-3 md:p-4 bg-white dark:bg-gray-900 border-t border-gray-200 dark:border-gray-800">
                 {smartReplies.length > 0 && (
                   <div className="flex flex-wrap gap-2 mb-3">
                     {smartReplies.map((reply, i) => (
                       <button 
                         key={i}
                         onClick={() => handleSendMessage(reply)}
-                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-full px-4 py-1.5 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
+                        className="text-xs font-semibold text-blue-600 dark:text-blue-400 border border-blue-600 dark:border-blue-400 rounded-full px-3 py-1 hover:bg-blue-50 dark:hover:bg-blue-900/30 transition-colors"
                       >
                         {reply}
                       </button>
@@ -147,7 +150,7 @@ const Messaging: React.FC = () => {
                       onChange={(e) => setNewMessage(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && !e.shiftKey && (e.preventDefault(), handleSendMessage())}
                       placeholder="Write a message..."
-                      className="w-full p-3 bg-transparent border-none focus:ring-0 resize-none h-20 text-sm dark:text-white"
+                      className="w-full p-3 bg-transparent border-none focus:ring-0 resize-none h-14 md:h-20 text-sm dark:text-white"
                     />
                   </div>
                   <button 

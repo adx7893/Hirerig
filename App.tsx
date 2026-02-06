@@ -11,6 +11,18 @@ import Messaging from './pages/Messaging';
 import Profile from './pages/Profile';
 import Candidates from './pages/Candidates';
 import ProjectManagement from './pages/ProjectManagement';
+import MeetTheConsultant from './pages/MeetTheConsultant';
+import SubmittedApplications from './pages/SubmittedApplications';
+import ApplicationManagement from './pages/ApplicationManagement';
+import NewEnrollment from './pages/NewEnrollment';
+import Registration from './pages/Registration';
+import Placements from './pages/Placements';
+import Subscribers from './pages/Subscribers';
+import PostJob from './pages/PostJob';
+import RoleManagement from './pages/RoleManagement';
+import BatchManagement from './pages/BatchManagement';
+import Promotions from './pages/Promotions';
+import CareerAgent from './pages/CareerAgent';
 import { UserRole } from './types';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -24,23 +36,12 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return (
     <div className={`min-h-screen transition-colors duration-300 ${isRecruiter ? 'bg-gray-50 dark:bg-gray-950' : 'bg-gray-50 dark:bg-gray-950'}`}>
       <Navbar />
-      <div className={isRecruiter ? 'ml-64 p-8 min-h-screen' : 'bg-gray-50 dark:bg-gray-950 min-h-[calc(100vh-56px)]'}>
+      <div className={isRecruiter ? 'md:ml-64 p-4 md:p-8 min-h-screen pt-20 md:pt-8' : 'bg-gray-50 dark:bg-gray-950 min-h-[calc(100vh-56px)]'}>
         {children}
       </div>
     </div>
   );
 };
-
-// Placeholder component for new Recruiter Routes
-const RecruiterPlaceholder: React.FC<{ title: string }> = ({ title }) => (
-  <div className="max-w-6xl mx-auto p-10 text-center dark:text-white animate-fade-up">
-    <div className="w-20 h-20 bg-blue-50 dark:bg-blue-900/20 rounded-full flex items-center justify-center mx-auto mb-6">
-      <i className="fa-solid fa-person-digging text-3xl text-blue-600"></i>
-    </div>
-    <h1 className="text-3xl font-bold mb-2">{title}</h1>
-    <p className="text-gray-500 dark:text-gray-400">This module is currently under development.</p>
-  </div>
-);
 
 const App: React.FC = () => {
   return (
@@ -94,17 +95,71 @@ const App: React.FC = () => {
               </ProtectedRoute>
             } />
 
-            <Route path="/consultant" element={<ProtectedRoute><RecruiterPlaceholder title="Meet the Consultant" /></ProtectedRoute>} />
-            <Route path="/submitted" element={<ProtectedRoute><RecruiterPlaceholder title="Submitted Applications" /></ProtectedRoute>} />
-            <Route path="/applications" element={<ProtectedRoute><RecruiterPlaceholder title="Application Management" /></ProtectedRoute>} />
-            <Route path="/enrollment" element={<ProtectedRoute><RecruiterPlaceholder title="New Enrollment" /></ProtectedRoute>} />
-            <Route path="/registration" element={<ProtectedRoute><RecruiterPlaceholder title="Registration" /></ProtectedRoute>} />
-            <Route path="/placements" element={<ProtectedRoute><RecruiterPlaceholder title="Placements" /></ProtectedRoute>} />
-            <Route path="/subscribers" element={<ProtectedRoute><RecruiterPlaceholder title="Subscribers" /></ProtectedRoute>} />
-            <Route path="/post-job" element={<ProtectedRoute><RecruiterPlaceholder title="Post a Job" /></ProtectedRoute>} />
-            <Route path="/roles" element={<ProtectedRoute><RecruiterPlaceholder title="Role Management" /></ProtectedRoute>} />
-            <Route path="/batches" element={<ProtectedRoute><RecruiterPlaceholder title="Batch Management" /></ProtectedRoute>} />
-            <Route path="/promotions" element={<ProtectedRoute><RecruiterPlaceholder title="Promotions" /></ProtectedRoute>} />
+            {/* Functional Routes */}
+            <Route path="/consultant" element={
+              <ProtectedRoute>
+                <MeetTheConsultant />
+              </ProtectedRoute>
+            } />
+            <Route path="/submitted" element={
+              <ProtectedRoute>
+                <SubmittedApplications />
+              </ProtectedRoute>
+            } />
+            <Route path="/applications" element={
+              <ProtectedRoute>
+                <ApplicationManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/enrollment" element={
+              <ProtectedRoute>
+                <NewEnrollment />
+              </ProtectedRoute>
+            } />
+            <Route path="/registration" element={
+              <ProtectedRoute>
+                <Registration />
+              </ProtectedRoute>
+            } />
+            <Route path="/placements" element={
+              <ProtectedRoute>
+                <Placements />
+              </ProtectedRoute>
+            } />
+
+            {/* Newly Added Data Management Routes */}
+            <Route path="/subscribers" element={
+              <ProtectedRoute>
+                <Subscribers />
+              </ProtectedRoute>
+            } />
+            <Route path="/post-job" element={
+              <ProtectedRoute>
+                <PostJob />
+              </ProtectedRoute>
+            } />
+            <Route path="/roles" element={
+              <ProtectedRoute>
+                <RoleManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/batches" element={
+              <ProtectedRoute>
+                <BatchManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="/promotions" element={
+              <ProtectedRoute>
+                <Promotions />
+              </ProtectedRoute>
+            } />
+            
+            {/* AI Career Agent */}
+            <Route path="/career-agent" element={
+              <ProtectedRoute>
+                <CareerAgent />
+              </ProtectedRoute>
+            } />
 
             <Route path="/notifications" element={
               <ProtectedRoute>
